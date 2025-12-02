@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Cidades</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-city"></i>
+            <h1>Dashboard TJ-SP</h1>
+        </div>
+        <div class="header-controls">
+            <button class="btn-mode" id="toggleTheme">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div class="user">
+                <i class="fas fa-user"></i>
+                <span>Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar com cidades -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-map-marker-alt"></i> Cidades</h2>
+                <span class="counter" id="selectedCount">0 selecionadas</span>
+            </div>
+
+            <div class="cities-list" id="citiesList">
+                <!-- Cidades serão carregadas via JavaScript -->
+                <div class="loading">Carregando cidades...</div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn-select-all" id="selectAll">
+                    <i class="fas fa-check-double"></i> Selecionar Todas
+                </button>
+                <button class="btn-clear" id="clearAll">
+                    <i class="fas fa-times"></i> Limpar
+                </button>
+            </div>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <!-- Filtros -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="filterEdition"><i class="fas fa-calendar-alt"></i> Edição:</label>
+                    <select id="filterEdition">
+                        <option value="all">Todas</option>
+                        <!-- Opções serão carregadas via JS -->
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterDate"><i class="fas fa-clock"></i> Data:</label>
+                    <input type="date" id="filterDate">
+                </div>
+
+                <!-- NOVO: Seletor de Categorias -->
+                <div class="filter-group">
+                    <label><i class="fas fa-filter"></i> Categorias:</label>
+                    <div class="category-filters">
+                        <label class="category-checkbox">
+                            <input type="checkbox" id="filterAC" checked>
+                            <span class="checkmark" style="background-color: #4cc9f0;"></span>
+                            AC
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" id="filterPPP" checked>
+                            <span class="checkmark" style="background-color: #7209b7;"></span>
+                            PPP
+                        </label>
+                        <label class="category-checkbox">
+                            <input type="checkbox" id="filterPCD" checked>
+                            <span class="checkmark" style="background-color: #f72585;"></span>
+                            PCD
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn-apply" id="applyFilters">
+                    <i class="fas fa-filter"></i> Aplicar Filtros
+                </button>
+            </div>
+
+            <!-- Mensagem quando nenhuma cidade selecionada -->
+            <div id="noCitySelected" class="empty-state" style="display: none;">
+                <i class="fas fa-city fa-3x"></i>
+                <h3>Selecione uma cidade</h3>
+                <p>Escolha uma cidade na sidebar para visualizar os candidatos</p>
+            </div>
+
+            <!-- Área das Categorias (será preenchida quando cidade for selecionada) -->
+            <div class="categories-container" id="categoriesContainer">
+                <!-- Conteúdo será gerado dinamicamente -->
+            </div>
+
+            <!-- Últimos Convocados -->
+            <div class="recent-convocations">
+                <h3><i class="fas fa-trophy"></i> Últimos 3 Convocados</h3>
+                <div class="convocations-list" id="convocationsList">
+                    <div class="empty-convocations">
+                        Nenhum convocado encontrado
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para detalhes do candidato -->
+    <div class="modal" id="candidateModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalTitle">Detalhes do Candidato</h2>
+            <div class="modal-body" id="modalBody">
+                <!-- Conteúdo carregado via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-edit" id="editCandidate">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+                <button class="btn-close-modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Scripts - ORDEM CORRETA É ESSENCIAL -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
