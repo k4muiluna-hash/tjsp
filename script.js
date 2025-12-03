@@ -569,19 +569,10 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    // DEBUG: Mostrar as datas das últimas convocações
-    console.log("Últimas convocações encontradas:");
-    lastConvocations.slice(0, 5).forEach((conv, i) => {
-        if (conv.timestamp) {
-            const dataObj = new Date(conv.timestamp);
-            console.log(`${i+1}. ${conv.Nome} - Data original: ${conv.Data} - Data convertida: ${dataObj.toLocaleDateString('pt-BR')}`);
-        }
-    });
-
     // Pegar ÚLTIMOS 3 convocados (mais recentes)
     const lastThree = lastConvocations.slice(0, 3);
 
-    lastThree.forEach((conv, index) => {
+    lastThree.forEach((conv) => {
         const convItem = document.createElement('div');
         convItem.className = 'convocation-item';
 
@@ -598,20 +589,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         convItem.innerHTML = `
-            <div class="convocation-position">
-                <span class="position-badge ${index === 0 ? 'first' : index === 1 ? 'second' : 'third'}">
-                    ${index + 1}º
-                </span>
-            </div>
             <div class="convocation-header">
                 <i class="fas fa-user-graduate"></i>
-                <div>
+                <div class="convocation-info">
                     <h4>${conv.Nome}</h4>
                     <small>${conv.Cidade} • ${conv.categoria === 'geral' ? 'AC' : conv.categoria === 'negros' ? 'PPP' : 'PCD'}</small>
                 </div>
             </div>
             <div class="convocation-details">
-                <span class="badge-class">${conv.Classif_Final}</span>
+                <span class="badge-class">${conv.Classif_Final}º</span>
                 <span class="badge-date">
                     <i class="far fa-calendar"></i> ${dataFormatada}
                 </span>
@@ -627,20 +613,19 @@ document.addEventListener('DOMContentLoaded', function () {
         convocationsList.appendChild(convItem);
     });
 
-
-        // Event listeners para os botões de visualização
-        setTimeout(() => {
-            convocationsList.querySelectorAll('.btn-view-candidate').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const cidade = btn.dataset.cidade;
-                    const categoria = btn.dataset.categoria;
-                    const id = btn.dataset.id;
-                    showCandidateModal(cidade, categoria, id);
-                });
+    // Event listeners para os botões de visualização
+    setTimeout(() => {
+        convocationsList.querySelectorAll('.btn-view-candidate').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const cidade = btn.dataset.cidade;
+                const categoria = btn.dataset.categoria;
+                const id = btn.dataset.id;
+                showCandidateModal(cidade, categoria, id);
             });
-        }, 0);
-    }
+        });
+    }, 0);
+}
 
     function showAllConvocationsModal() {
         document.getElementById('modalTitle').textContent = `Todas as convocações (${lastConvocations.length})`;
@@ -1078,4 +1063,5 @@ function parseDateToTimestamp(dateString) {
     }
 
 });
+
 
