@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
             <div class="convocation-details">
-                <span class="badge-class">${conv.Classif_Final}º</span>
+                <span class="badge-class">${conv.Classif_Final}</span>
                 <span class="badge-date">
                     <i class="far fa-calendar"></i> ${dataFormatada}
                 </span>
@@ -1063,5 +1063,6 @@ function parseDateToTimestamp(dateString) {
     }
 
 });
+
 
 
