@@ -557,49 +557,70 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderLastConvocations() {
-        convocationsList.innerHTML = '';
+    convocationsList.innerHTML = '';
 
-        if (lastConvocations.length === 0) {
-            convocationsList.innerHTML = `
-                <div class="empty-convocations">
-                    <i class="fas fa-info-circle"></i>
-                    Nenhum convocado encontrado
-                </div>
-            `;
-            return;
+    if (lastConvocations.length === 0) {
+        convocationsList.innerHTML = `
+            <div class="empty-convocations">
+                <i class="fas fa-info-circle"></i>
+                Nenhum convocado encontrado
+            </div>
+        `;
+        return;
+    }
+
+    // DEBUG: Mostrar as datas das últimas convocações
+    console.log("Últimas convocações encontradas:");
+    lastConvocations.slice(0, 5).forEach((conv, i) => {
+        console.log(`${i+1}. ${conv.Nome} - Data: ${conv.Data} - Timestamp: ${conv.timestamp} - Data formatada: ${conv.timestamp ? new Date(conv.timestamp).toLocaleDateString() : 'Sem data'}`);
+    });
+
+    // Pegar ÚLTIMOS 3 convocados (mais recentes)
+    const lastThree = lastConvocations.slice(0, 3);
+
+    lastThree.forEach((conv, index) => {
+        const convItem = document.createElement('div');
+        convItem.className = 'convocation-item';
+
+        // Formatar data para exibição
+        let dataFormatada = conv.Data || 'Sem data';
+        if (conv.timestamp) {
+            const dataObj = new Date(conv.timestamp);
+            if (!isNaN(dataObj.getTime())) {
+                dataFormatada = dataObj.toLocaleDateString('pt-BR');
+            }
         }
 
-        // Pegar ÚLTIMOS 3 convocados (mais recentes)
-        const lastThree = lastConvocations.slice(0, 3);
-
-        lastThree.forEach(conv => {
-            const convItem = document.createElement('div');
-            convItem.className = 'convocation-item';
-
-            convItem.innerHTML = `
-                <div class="convocation-header">
-                    <i class="fas fa-user-graduate"></i>
-                    <div>
-                        <h4>${conv.Nome.split(' ')[0]} ${conv.Nome.split(' ')[1] || ''}</h4>
-                        <small>${conv.Cidade} • ${conv.categoria === 'geral' ? 'AC' : conv.categoria === 'negros' ? 'PPP' : 'PCD'}</small>
-                    </div>
+        convItem.innerHTML = `
+            <div class="convocation-position">
+                <span class="position-badge ${index === 0 ? 'first' : index === 1 ? 'second' : 'third'}">
+                    ${index + 1}º
+                </span>
+            </div>
+            <div class="convocation-header">
+                <i class="fas fa-user-graduate"></i>
+                <div>
+                    <h4>${conv.Nome}</h4>
+                    <small>${conv.Cidade} • ${conv.categoria === 'geral' ? 'AC' : conv.categoria === 'negros' ? 'PPP' : 'PCD'}</small>
                 </div>
-                <div class="convocation-details">
-                    <span class="badge-class">${conv.Classif_Final}</span>
-                    <span class="badge-date">
-                        <i class="far fa-calendar"></i> ${conv.Data || 'Sem data'}
-                    </span>
-                </div>
-                <button class="btn-view-candidate" 
-                        data-cidade="${conv.Cidade}" 
-                        data-categoria="${conv.categoria}"
-                        data-id="${conv.Inscrição}">
-                    <i class="fas fa-eye"></i>
-                </button>
-            `;
+            </div>
+            <div class="convocation-details">
+                <span class="badge-class">${conv.Classif_Final}</span>
+                <span class="badge-date">
+                    <i class="far fa-calendar"></i> ${dataFormatada}
+                </span>
+            </div>
+            <button class="btn-view-candidate" 
+                    data-cidade="${conv.Cidade}" 
+                    data-categoria="${conv.categoria}"
+                    data-id="${conv.Inscrição}">
+                <i class="fas fa-eye"></i>
+            </button>
+        `;
 
-            convocationsList.appendChild(convItem);
-        });
+        convocationsList.appendChild(convItem);
+    });
+
 
         // Event listeners para os botões de visualização
         setTimeout(() => {
@@ -725,38 +746,96 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function findLastConvocations() {
-        lastConvocations = [];
+    lastConvocations = [];
 
-        for (const cidade in allData) {
-            const categorias = allData[cidade];
+    for (const cidade in allData) {
+        const categorias = allData[cidade];
 
-            for (const categoria in categorias) {
-                if (['especiais', 'negros', 'geral'].includes(categoria)) {
-                    const candidatos = categorias[categoria];
+        for (const categoria in categorias) {
+            if (['especiais', 'negros', 'geral'].includes(categoria)) {
+                const candidatos = categorias[categoria];
 
-                    candidatos.forEach(candidato => {
-                        if (candidato.Conv_DJE === "Sim") {
-                            const convocado = { 
-                                ...candidato, 
-                                categoria,
-                                // Criar timestamp para ordenação
-                                timestamp: candidato.Data ? 
-                                    new Date(candidato.Data.split('-').reverse().join('-')).getTime() : 0
-                            };
-                            lastConvocations.push(convocado);
+                candidatos.forEach(candidato => {
+                    if (candidato.Conv_DJE === "Sim") {
+                        let timestamp = 0;
+                        
+                        if (candidato.Data) {
+                            // Tentar diferentes formatos de data
+                            timestamp = parseDateToTimestamp(candidato.Data);
                         }
-                    });
-                }
+                        
+                        const convocado = { 
+                            ...candidato, 
+                            categoria,
+                            timestamp: timestamp
+                        };
+                        lastConvocations.push(convocado);
+                    }
+                });
             }
         }
-
-        // ORDENAÇÃO: Por data (mais recente primeiro)
-        lastConvocations.sort((a, b) => {
-            return b.timestamp - a.timestamp; // Mais recente primeiro
-        });
-
-        renderLastConvocations();
     }
+
+    // ORDENAÇÃO: Por data (mais recente primeiro)
+    lastConvocations.sort((a, b) => {
+        // Primeiro ordena por timestamp (mais recente primeiro)
+        const dateDiff = b.timestamp - a.timestamp;
+        
+        // Se as datas forem iguais (empate), ordena por nome
+        if (dateDiff === 0) {
+            return a.Nome.localeCompare(b.Nome);
+        }
+        
+        return dateDiff;
+    });
+
+    renderLastConvocations();
+}
+
+// Função auxiliar para converter data para timestamp
+function parseDateToTimestamp(dateString) {
+    if (!dateString) return 0;
+    
+    // Remover espaços extras
+    dateString = dateString.trim();
+    
+    // Tentar diferentes formatos
+    let date;
+    
+    // Formato dd/mm/yyyy ou dd-mm-yyyy
+    if (dateString.includes('/') || dateString.includes('-')) {
+        const parts = dateString.split(/[\/\-]/);
+        
+        if (parts.length === 3) {
+            // Se o primeiro parte tem 4 dígitos, assume yyyy-mm-dd
+            if (parts[0].length === 4) {
+                date = new Date(`${parts[0]}-${parts[1]}-${parts[2]}`);
+            } 
+            // Se o último parte tem 4 dígitos, assume dd-mm-yyyy ou dd/mm/yyyy
+            else if (parts[2].length === 4) {
+                date = new Date(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+            }
+            // Se o último parte tem 2 dígitos, assume dd-mm-yy
+            else if (parts[2].length === 2) {
+                const year = parseInt(parts[2]) + 2000; // Assume século 21
+                date = new Date(`${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+            }
+        }
+    }
+    
+    // Se não conseguiu parsear, tenta usar o construtor Date diretamente
+    if (!date || isNaN(date.getTime())) {
+        date = new Date(dateString);
+    }
+    
+    // Se ainda não for válido, retorna 0
+    if (isNaN(date.getTime())) {
+        console.warn(`Data inválida: ${dateString}`);
+        return 0;
+    }
+    
+    return date.getTime();
+}
 
     // Função auxiliar para extrair número da classificação
     function extractNumberFromClassification(classif) {
@@ -971,4 +1050,5 @@ document.addEventListener('DOMContentLoaded', function () {
         const icon = toggleThemeBtn.querySelector('i');
         icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
     }
+
 });
