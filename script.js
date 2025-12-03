@@ -572,7 +572,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // DEBUG: Mostrar as datas das últimas convocações
     console.log("Últimas convocações encontradas:");
     lastConvocations.slice(0, 5).forEach((conv, i) => {
-        console.log(`${i+1}. ${conv.Nome} - Data: ${conv.Data} - Timestamp: ${conv.timestamp} - Data formatada: ${conv.timestamp ? new Date(conv.timestamp).toLocaleDateString() : 'Sem data'}`);
+        if (conv.timestamp) {
+            const dataObj = new Date(conv.timestamp);
+            console.log(`${i+1}. ${conv.Nome} - Data original: ${conv.Data} - Data convertida: ${dataObj.toLocaleDateString('pt-BR')}`);
+        }
     });
 
     // Pegar ÚLTIMOS 3 convocados (mais recentes)
@@ -582,12 +585,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const convItem = document.createElement('div');
         convItem.className = 'convocation-item';
 
-        // Formatar data para exibição
+        // Formatar data para exibição corretamente
         let dataFormatada = conv.Data || 'Sem data';
         if (conv.timestamp) {
             const dataObj = new Date(conv.timestamp);
             if (!isNaN(dataObj.getTime())) {
-                dataFormatada = dataObj.toLocaleDateString('pt-BR');
+                // Garantir que estamos usando a data correta
+                dataFormatada = dataObj.getUTCDate().toString().padStart(2, '0') + '/' + 
+                               (dataObj.getUTCMonth() + 1).toString().padStart(2, '0') + '/' + 
+                               dataObj.getUTCFullYear();
             }
         }
 
@@ -793,6 +799,7 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 
 // Função auxiliar para converter data para timestamp
+// Função auxiliar para converter data para timestamp (corrigindo fuso horário)
 function parseDateToTimestamp(dateString) {
     if (!dateString) return 0;
     
@@ -807,34 +814,53 @@ function parseDateToTimestamp(dateString) {
         const parts = dateString.split(/[\/\-]/);
         
         if (parts.length === 3) {
+            let day, month, year;
+            
             // Se o primeiro parte tem 4 dígitos, assume yyyy-mm-dd
             if (parts[0].length === 4) {
-                date = new Date(`${parts[0]}-${parts[1]}-${parts[2]}`);
+                year = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1; // Mês em JavaScript é 0-indexed
+                day = parseInt(parts[2]);
             } 
             // Se o último parte tem 4 dígitos, assume dd-mm-yyyy ou dd/mm/yyyy
             else if (parts[2].length === 4) {
-                date = new Date(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+                day = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1; // Mês em JavaScript é 0-indexed
+                year = parseInt(parts[2]);
             }
             // Se o último parte tem 2 dígitos, assume dd-mm-yy
             else if (parts[2].length === 2) {
-                const year = parseInt(parts[2]) + 2000; // Assume século 21
-                date = new Date(`${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+                day = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1; // Mês em JavaScript é 0-indexed
+                year = parseInt(parts[2]) + 2000; // Assume século 21
+            }
+            
+            // Criar data usando UTC para evitar problemas de fuso horário
+            if (day && month !== undefined && year) {
+                date = new Date(Date.UTC(year, month, day));
+                console.log(`Data parseada: ${dateString} -> UTC Date: ${date.toISOString()}`);
+                return date.getTime();
             }
         }
     }
     
-    // Se não conseguiu parsear, tenta usar o construtor Date diretamente
-    if (!date || isNaN(date.getTime())) {
-        date = new Date(dateString);
+    // Se não conseguiu parsear nos formatos acima, tenta usar o construtor Date
+    date = new Date(dateString);
+    
+    // Se for válido, ajusta para UTC para evitar problemas de timezone
+    if (!isNaN(date.getTime())) {
+        // Ajustar para UTC para evitar mudança de dia
+        const utcDate = new Date(Date.UTC(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        ));
+        console.log(`Data genérica: ${dateString} -> UTC Date: ${utcDate.toISOString()}`);
+        return utcDate.getTime();
     }
     
-    // Se ainda não for válido, retorna 0
-    if (isNaN(date.getTime())) {
-        console.warn(`Data inválida: ${dateString}`);
-        return 0;
-    }
-    
-    return date.getTime();
+    console.warn(`Data inválida: ${dateString}`);
+    return 0;
 }
 
     // Função auxiliar para extrair número da classificação
@@ -1052,3 +1078,4 @@ function parseDateToTimestamp(dateString) {
     }
 
 });
+
